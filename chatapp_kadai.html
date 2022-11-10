@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>不審者情報等掲示板〜照葉小学校校区</title>
+</head>
+
+<body>
+    <h1>不審者情報等掲示板〜照葉小学校校区〜</h1>
+    <p>子供たちに及びそうな危険があれば教えてください</p>
+
+    <form>
+        <fieldset>
+            <legend>危険だと思ったことなど</legend>
+            <div>
+                ニックネーム: <input type="text" id="name">
+            </div>
+            <div>
+                どうしましたか？: <input type="text" id="text">
+            </div>
+            <div>
+                <button type="button" id="send">記録</button>
+            </div>
+        </fieldset>
+    </form>
+    <!-- データ出力場所 -->
+    <ul id="output"></ul>
+    <!--　日付処理のJQuery  -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+        // 日時をいい感じの形式にする関数（完全にコピペ）
+        function convertTimestampToDatetime(timestamp) {
+            const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+            const Y = _d.getFullYear();
+            const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+            const d = _d.getDate().toString().padStart(2, '0');
+            const H = _d.getHours().toString().padStart(2, '0');
+            const i = _d.getMinutes().toString().padStart(2, '0');
+            const s = _d.getSeconds().toString().padStart(2, '0');
+            return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+        }
+    </script>
+
+    <script type="module">
+        // 必要なSDKから必要な機能をインポート
+        // このコードでは接続情報を db に保存する．この 1 行を書いておくことで db に対してデータの追加や取得ができるようになる．
+        // 下記１行目import部分はfirebaseからのコピペ。versionを指定するところがあるので、数字はここのを使うこと。
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-app.js";
+        // これ以降もコピペ(fromまで)。httpsの数値を上記に合わせること。
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            serverTimestamp,
+            onSnapshot,
+            query,
+            orderBy,
+        }
+            from "https://www.gstatic.com/firebasejs/9.13.0/firebase-firestore.js";
+        // TODO: 使いたいFirebase製品のSDKを追加する
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        // Your web app's Firebase configuration
+        // 下記はfirebaseのプロジェクトを作成した際に出てくるコードである。
+        // 単純にコピペをしたものである。注意点は注意点はapiKeyの存在である。
+        // Gitへのcommitの時には消す必要がある
+        const firebaseConfig = {
+            apiKey: "AIzaSyBJnIwakTRprdMbcWGffnfnAgYWQpx7ngg",
+            authDomain: "happiness-future-plan.firebaseapp.com",
+            projectId: "happiness-future-plan",
+            storageBucket: "happiness-future-plan.appspot.com",
+            messagingSenderId: "927563173241",
+            appId: "1:927563173241:web:0b1b2503f162853c24f3a8"
+        };
+        // Initialize Firebase  コピペ
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        // #send を押したらイベント発生
+        $("#send").on('click', function () {
+            //console.log($("#name").val());//確認済
+            //console.log($("#text").val());//確認済
+            // 入力値をfirebaseが取得するコマンド
+            const postData = {
+                name: $("#name").val(),
+                text: $("#text").val(),
+                time: serverTimestamp(),//57行を追加
+            };
+            // データを送信する際にはオブジェクト形式にする必要がある．
+            // addDocはidの自動生成？５６行？プロジェクト作った時に選択した自動生成のことかな？
+            addDoc(collection(db, "chat"), postData);//これでfirebaseに登録された
+            $("#name").val("");//これでhtml空欄になる
+            $("#text").val("");//これでhtml空欄になる
+        });
+        $("#text").on("keydown", function (e) {
+            // console.log(e);　←こいつがあると全部のキーの操作に反応してconsole.logが反応する
+            if (e.keyCode === 13) {
+                const postData = {
+                    name: $("#name").val(),
+                    text: $("#text").val(),
+                    time: serverTimestamp(),
+                };
+                addDoc(collection(db, "chat"), postData);
+                $("#text").val("");
+                $("#name").val("");
+            }
+        })
+
+        const q = query(collection(db, "chat"), orderBy("time", "desc"));
+        onSnapshot(q, (querySnapshot) => {
+            console.log(querySnapshot.docs);
+
+            // データに変更がかかった段階で実行されるonSnapshotを使う
+            // onSnapshotはデータベース内で変更が発生したタイミングで{の処理を行う}
+            // Firestore 上に保存されているデータは querySnapshot.docs に入っている（コピペ）
+            // onSnapshot(collection(db, "chat"), (querySnapshot) => { //58行追加
+            // console.log(querySnapshot.docs);//2回consoleが反応する、なぜだろう？（解決済）
+
+            // データの取り出し オブジェクト形式の配列に変換
+            // 空の配列を準備
+            const documents = [];
+            // console.log(querySnapshot.docs);
+            // querySnapshot.docs に対して繰り返し処理を用いて各要素に対して，
+            // .id でドキュメント ID（名前）を取得する．
+            // .data() でドキュメント中身（3 項目）を取得する．
+            querySnapshot.docs.forEach(function (doc) {
+                const document = {
+                    id: doc.id,
+                    data: doc.data(),
+                };
+                documents.push(document);
+            });
+            console.log(documents);
+            // 必要な情報のみを抽出した配列が作成できたため，この配列から画面表示用のタグを作成する．
+            // 前項で作成した documents を基にして，
+            // 空の配列を準備する．
+            // documents に繰り返しを用い，各要素をタグの形にする．
+            // 繰り返し処理終了後に指定した id 部分に出力する
+            const htmlElements = [];
+            documents.forEach(function (document) {
+                htmlElements.push(`
+              <li id="${document.id}">
+              <p>${document.data.name} at ${convertTimestampToDatetime(document.data.time.seconds)}</p>
+              <p>${document.data.text}</p>
+            </li>
+            `);
+            });
+            $("#output").html(htmlElements);
+        });
+    </script>
+</body>
+
+</html>

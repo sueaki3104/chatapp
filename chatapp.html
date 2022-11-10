@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>chatApp</title>
+  <style>
+    #output li {
+      background: #ccc;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>realtime chat</h1>
+  <!-- 入力場所を作成しよう -->
+  <form>
+    <fieldset>
+      <legend>チャット入力画面</legend>
+      <div>
+        name: <input type="text" id="name">
+      </div>
+      <div>
+        text: <input type="text" id="text">
+      </div>
+      <div>
+        <button type="button" id="send">send</button>
+      </div>
+    </fieldset>
+  </form>
+
+  <!-- データ出力場所 -->
+  <ul id="output"></ul>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script>
+    // 日時をいい感じの形式にする関数
+    function convertTimestampToDatetime(timestamp) {
+      const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+      const Y = _d.getFullYear();
+      const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+      const d = _d.getDate().toString().padStart(2, '0');
+      const H = _d.getHours().toString().padStart(2, '0');
+      const i = _d.getMinutes().toString().padStart(2, '0');
+      const s = _d.getSeconds().toString().padStart(2, '0');
+      return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+    }
+  </script>
+  <!-- 以下にfirebaseのコードを貼り付けよう -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      addDoc,
+      serverTimestamp,
+      query,
+      orderBy,
+      onSnapshot,
+    } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-firestore.js";
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6Fd8qTCyGfyPQukSfWFh2UD5acT95MD8",
+      authDomain: "chat-app-test-1bdbc.firebaseapp.com",
+      projectId: "chat-app-test-1bdbc",
+      storageBucket: "chat-app-test-1bdbc.appspot.com",
+      messagingSenderId: "440205320412",
+      appId: "1:440205320412:web:c6d62f2ee1bf4c85be5419"
+    };
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    $("#send").on('click', function () {
+      // console.log($("#name").val());
+
+      const postData = {
+        name: $("#name").val(),
+        text: $("#text").val(),
+        time: serverTimestamp(),
+      };
+      addDoc(collection(db, "chat"), postData);
+      $("#text").val("");
+      $("#name").val("");
+    });
+
+    // データに変更がかかった段階で実行されるonSnapshotを使う
+    // onSnapshotはデータベース内で変更が発生したタイミングで{の処理を行う}
+    // Firestore 上に保存されているデータは querySnapshot.docs に入っている
+    // onSnapshot(collection(db,"chat"),(querySnapshot)=>{
+    //   console.log(querySnapshot.docs);
+    // });
+
+    $("#text").on("keydown", function (e) {
+      console.log(e);
+
+      if (e.keyCode === 13) {
+        const postData = {
+          name: $("#name").val(),
+          text: $("#text").val(),
+          time: serverTimestamp(),
+        };
+        addDoc(collection(db, "chat"), postData);
+        $("#text").val("");
+        $("#name").val("");
+      }
+    })
+
+    const q = query(collection(db, "chat"), orderBy("time", "desc"));
+    onSnapshot(q, (querySnapshot) => {
+
+      console.log(querySnapshot.docs);
+
+      // 上記 querySnapshot.docs は非常に複雑な形となっており，このまま扱うことは難しい．
+      // そのため，必要なデータのみ抽出した「オブジェクト形式の配列」に変換する．
+      // 空の配列を準備．
+      const documents = [];
+      // console.log(querySnapshot.docs);
+      // querySnapshot.docs に対して繰り返し処理を用いて各要素に対して，
+      // .id でドキュメント ID（名前）を取得する．
+      // .data() でドキュメント中身（3 項目）を取得する．
+      querySnapshot.docs.forEach(function (doc) {
+        const document = {
+          id: doc.id,
+          data: doc.data(),
+        };
+        documents.push(document);
+      });
+      console.log(documents);
+
+      // 必要な情報のみを抽出した配列が作成できたため，この配列から画面表示用のタグを作成する．
+      // 前項で作成した documents を基にして，
+      // 空の配列を準備する．
+      // documents に繰り返しを用い，各要素をタグの形にする．
+      // 繰り返し処理終了後に指定した id 部分に出力する
+      const htmlElements = [];
+      documents.forEach(function (document) {
+        htmlElements.push(`
+              <li id="${document.id}">
+              <p>${document.data.name} at ${convertTimestampToDatetime(document.data.time.seconds)}</p>
+              <p>${document.data.text}</p>
+            </li>
+            `);
+      });
+
+      $("#output").html(htmlElements);
+
+    });
+
+
+
+  </script>
+
+</body>
+
+</html>
