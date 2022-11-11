@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ウィスキー情報登録画面</title>
+</head>
+
+<body>
+    <form>
+        <fieldset>
+            <legend>登録画面</legend>
+            <div>
+                ラジオネーム（必須） : <input type="text" id="name" name="your radio name" placeholder="ラジオネームを書いてください"
+                    style=width:450px;>
+            </div>
+            <div>
+                なに県ですか（必須） : <input type="text" id="text1" name="What prefecture?" placeholder="例：福岡県"
+                    style=width:450px;>
+            </div>
+            <div>
+                なに市ですか（任意） : <input type="text" id="text2" name="what city" placeholder="例：福岡市" style=width:450px;>
+            </div>
+            <div>
+                お店の名前は（任意） : <input type="text" id="text3" name="shop name" placeholder="例：〇〇酒店" style=width:450px;>
+            </div>
+            <div>
+                お店のヒント（任意） : <input type="text" id="text4" name="shop hint" placeholder="お店の名前が明かせない場合、ヒントを書けるならお願いします"
+                    style=width:450px;>
+            </div>
+            <div>
+                ウィスキーの名前（必須）: <input type="text" id="text5" name="whisky name" placeholder="例：山崎１８年" style=width:450px;>
+            </div>
+            <div>
+                ウィスキーの値段（必須）: <input type="number" id="price" name="whisky price"
+                    placeholder="例: 50,000 半角数字のみ入力可能で税込価格を記載" style=width:450px;>
+            </div>
+            <div>
+                <button type="button" id="send" style=width:100px;>登録</button>
+            </div>
+        </fieldset>
+    </form>
+
+    <!-- データ出力場所 -->
+    <ul id="output"></ul>
+    <!--　日付処理のJQuery  -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+        // 日時をいい感じの形式にする関数（完全にコピペ）
+        function convertTimestampToDatetime(timestamp) {
+            const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+            const Y = _d.getFullYear();
+            const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+            const d = _d.getDate().toString().padStart(2, '0');
+            const H = _d.getHours().toString().padStart(2, '0');
+            const i = _d.getMinutes().toString().padStart(2, '0');
+            const s = _d.getSeconds().toString().padStart(2, '0');
+            return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+        }
+    </script>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-app.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            serverTimestamp,
+            onSnapshot,
+            query,
+            orderBy,
+        }
+            from "https://www.gstatic.com/firebasejs/9.13.0/firebase-firestore.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvEVVijh_u_jeKroQ6gzrz9RTjtFPsPx0",
+            authDomain: "whisky-where.firebaseapp.com",
+            projectId: "whisky-where",
+            storageBucket: "whisky-where.appspot.com",
+            messagingSenderId: "380036460499",
+            appId: "1:380036460499:web:75844167bf3012cc7f0926"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // #send を押したらイベント発生
+        $("#send").on('click', function () {
+            // console.log($("#name").val());//確認済
+            // console.log($("#text1").val());//確認済
+            // console.log($("#text2").val());//確認済
+            // console.log($("#text3").val());//確認済
+            // console.log($("#text4").val());//確認済
+            // console.log($("#text5").val());//確認済
+            // console.log($("#price").val());//確認済
+            // 入力値をfirebaseが取得するコマンド
+            const postData = {
+                name: $("#name").val(),
+                text1: $("#text1").val(),
+                text2: $("#text2").val(),
+                text3: $("#text3").val(),
+                text4: $("#text4").val(),
+                text5: $("#text5").val(),
+                number: $("#price").val(),
+                time: serverTimestamp(),//71行を追加
+            };
+            // データを送信する際にはオブジェクト形式にする必要がある．
+            // addDocはidの自動生成？70行？プロジェクト作った時に選択した自動生成のことかな？
+            addDoc(collection(db, "chat"), postData);//これでfirebaseに登録された
+            $("#name").val("");//これでhtml空欄になる
+            $("#text1").val("");//これでhtml空欄になる
+            $("#text2").val("");//これでhtml空欄になる
+            $("#text3").val("");//これでhtml空欄になる
+            $("#text4").val("");//これでhtml空欄になる
+            $("#text5").val("");//これでhtml空欄になる
+            $("#price").val("");//これでhtml空欄になる
+
+        });
+        $("#price").on("keydown", function (e) {
+            // console.log(e);　←こいつがあると全部のキーの操作に反応してconsole.logが反応する
+            if (e.keyCode === 13) {
+                const postData = {
+                    name: $("#name").val(),
+                    text: $("#text1").val(),
+                    text: $("#text2").val(),
+                    text: $("#text3").val(),
+                    text: $("#text4").val(),
+                    text: $("#text5").val(),
+                    text: $("#price").val(),
+                    time: serverTimestamp(),
+                };
+                addDoc(collection(db, "chat"), postData);
+                $("#name").val("");
+                $("#text1").val("");
+                $("#text2").val("");
+                $("#text3").val("");
+                $("#text4").val("");
+                $("#text5").val("");
+                $("#price").val("");
+
+            }
+        });
+
+        const q = query(collection(db, "chat"), orderBy("time", "desc"));
+        onSnapshot(q, (querySnapshot) => {
+            console.log(querySnapshot.docs);
+
+            // データに変更がかかった段階で実行されるonSnapshotを使う
+            // onSnapshotはデータベース内で変更が発生したタイミングで{の処理を行う}
+            // Firestore 上に保存されているデータは querySnapshot.docs に入っている（コピペ）
+            // onSnapshot(collection(db, "chat"), (querySnapshot) => { //58行追加
+            // console.log(querySnapshot.docs);//2回consoleが反応する、なぜだろう？（解決済）
+
+            // データの取り出し オブジェクト形式の配列に変換
+            // 空の配列を準備
+            const documents = [];
+            // console.log(querySnapshot.docs);
+            // querySnapshot.docs に対して繰り返し処理を用いて各要素に対して，
+            // .id でドキュメント ID（名前）を取得する．
+            // .data() でドキュメント中身（3 項目）を取得する．
+            querySnapshot.docs.forEach(function (doc) {
+                const document = {
+                    id: doc.id,
+                    data: doc.data(),
+                };
+                documents.push(document);
+            });
+            console.log(documents);
+            // 必要な情報のみを抽出した配列が作成できたため，この配列から画面表示用のタグを作成する．
+            // 前項で作成した documents を基にして，
+            // 空の配列を準備する．
+            // documents に繰り返しを用い，各要素をタグの形にする．
+            // 繰り返し処理終了後に指定した id 部分に出力する
+            const htmlElements = [];
+            documents.forEach(function (document) {
+                htmlElements.push(`
+              <li id="${document.id}">
+              <p>${document.data.name} at ${convertTimestampToDatetime(document.data.time.seconds)}</p>
+              <$>${document.data.text1} at ${document.data.text2}</p>
+              <$>${document.data.text3} at ${document.data.text4}</p>
+              <$>${document.data.text5} at ${document.data.number}</p>
+            </li>
+            `);
+            });
+            $("#output").html(htmlElements);
+        });
+
+
+    </script>
+</body>
+
+</html>

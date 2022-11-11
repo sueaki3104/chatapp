@@ -1,0 +1,55 @@
+body{
+    width: 900px;
+}
+
+.header_image{
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+
+.exit_body{
+    text-align: center;
+}
+
+.exit_button{
+    display: grid;
+}
+
+.top_image {
+    width: 600px;
+    height: 600px;
+    position: relative;
+}
+
+.top_image img {
+    width: 100%;
+}
+
+h1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 30px;
+    color: aliceblue;
+    padding: 0;
+    margin: 0;
+}
+
+/* .yes_or_no {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+} */
+
+h2 {
+    text-align: center;
+}
+
+top_input{
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

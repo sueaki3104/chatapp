@@ -1,0 +1,2 @@
+-- 課題提出は　chatapp_kadai1.html
+---チャレンジして一応形にしたけどってやつは　chatapp_kadai2-1_index.htmlからどうぞ
